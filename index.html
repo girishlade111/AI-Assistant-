@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - Gemini Chat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #007bff;
+            --primary-light: #e6f0ff;
+            --secondary: #6c757d;
+            --light: #f8f9fa;
+            --light-gray: #e9ecef;
+            --dark: #212529;
+            --dark-bg: #121212;
+            --dark-container: #1e1e1e;
+            --dark-header: #252525;
+            --dark-text: #e0e0e0;
+            --dark-input: #2d2d2d;
+            --dark-border: #444;
+            --success: #28a745;
+            --warning: #ffc107;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --dark-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light);
+            background-image: radial-gradient(#e1e4e8 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            line-height: 1.5;
+            transition: var(--transition);
+        }
+
+        body.dark-theme {
+            background-color: var(--dark-bg);
+            background-image: radial-gradient(#2a2a2a 1px, transparent 1px);
+            color: var(--dark-text);
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .dark-theme .chat-container {
+            background: var(--dark-container);
+            box-shadow: var(--dark-shadow);
+        }
+
+        .chat-header {
+            padding: 16px 20px;
+            background: white;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .dark-theme .chat-header {
+            background: var(--dark-header);
+            border-bottom: 1px solid var(--dark-border);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .dark-theme .chat-title {
+            color: var(--dark-text);
+        }
+
+        .chat-title::before {
+            content: "";
+            display: block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        .control-btn {
+            background: var(--primary-light);
+            border: none;
+            color: var(--primary);
+            padding: 8px 12px;
+            border-radius: 50px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .dark-theme .control-btn {
+            background: #333;
+            color: #e0e0e0;
+        }
+
+        .control-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .dark-theme .control-btn:hover {
+            background: #444;
+        }
+
+        .theme-toggle {
+            background: var(--primary-light);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--primary);
+        }
+
+        .dark-theme .theme-toggle {
+            background: #333;
+            color: #e0e0e0;
+        }
+
+        .chat-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: var(--transition);
+        }
+
+        .dark-theme .chat-history {
+            background: var(--dark-container);
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 14px 18px;
+            border-radius: var(--border-radius);
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .user-message {
+            background: var(--primary);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message {
+            background: var(--light-gray);
+            color: var(--dark);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .dark-theme .ai-message {
+            background: #333;
+            color: var(--dark-text);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .copy-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            opacity: 0;
+            transition: var(--transition);
+            color: inherit;
+        }
+
+        .message:hover .copy-btn {
+            opacity: 0.7;
+        }
+
+        .message:hover .copy-btn:hover {
+            opacity: 1;
+        }
+
+        .message-content {
+            font-size: 15px;
+        }
+
+        .message-content pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 12px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #f8f8f2;
+            font-size: 14px;
+        }
+
+        .copy-code-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #f8f8f2;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: var(--transition);
+        }
+
+        .copy-code-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 14px 18px;
+            background: var(--light-gray);
+            border-radius: var(--border-radius);
+            align-self: flex-start;
+            width: fit-content;
+            margin-top: -10px;
+        }
+
+        .dark-theme .typing-indicator {
+            background: #333;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: var(--secondary);
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.5s infinite ease-in-out;
+        }
+
+        .dark-theme .typing-indicator span {
+            background: #bbb;
+        }
+
+        .chat-input-area {
+            padding: 16px 20px;
+            border-top: 1px solid var(--light-gray);
+            background: white;
+            transition: var(--transition);
+        }
+
+        .dark-theme .chat-input-area {
+            background: var(--dark-header);
+            border-top: 1px solid var(--dark-border);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 1px solid var(--light-gray);
+            border-radius: 50px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .dark-theme .message-input {
+            background: var(--dark-input);
+            border: 1px solid var(--dark-border);
+            color: var(--dark-text);
+        }
+
+        .message-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+        }
+
+        .attachment-btn, .send-btn {
+            background: var(--light-gray);
+            color: var(--secondary);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .dark-theme .attachment-btn, .dark-theme .send-btn {
+            background: #333;
+            color: #bbb;
+        }
+
+        .send-btn {
+            background: var(--primary);
+            color: white;
+        }
+
+        .send-btn:disabled {
+            background: var(--light-gray);
+            cursor: not-allowed;
+        }
+
+        .dark-theme .send-btn:disabled {
+            background: #333;
+        }
+
+        .attachment-btn:hover, .send-btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .send-btn:not(:disabled):hover {
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 14px;
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        .notification.show {
+            opacity: 1;
+            top: 30px;
+        }
+
+        .dark-theme .notification {
+            background: #333;
+        }
+
+        .ai-agent-panel {
+            background: var(--light-gray);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .dark-theme .ai-agent-panel {
+            background: #2a2a2a;
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .agent-header i {
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .search-results {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .search-result {
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .dark-theme .search-result {
+            background: #333;
+        }
+
+        .search-result a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .search-result p {
+            font-size: 14px;
+            color: var(--secondary);
+        }
+
+        .dark-theme .search-result p {
+            color: #bbb;
+        }
+
+        .file-attachment {
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dark-theme .file-attachment {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--secondary);
+        }
+
+        .remove-file {
+            background: none;
+            border: none;
+            color: var(--secondary);
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow: auto;
+            position: relative;
+        }
+
+        .dark-theme .modal-content {
+            background: var(--dark-container);
+            color: var(--dark-text);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--secondary);
+        }
+
+        .dark-theme .close-modal {
+            color: #bbb;
+        }
+
+        .html-code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            max-height: 50vh;
+            margin-top: 20px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                height: 95vh;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .header-controls {
+                gap: 5px;
+            }
+            
+            .control-btn span {
+                display: none;
+            }
+            
+            .control-btn i {
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="chat-title">AI Assistant</div>
+            <div class="header-controls">
+                <button class="control-btn" id="htmlCopyBtn">
+                    <i class="fas fa-code"></i>
+                    <span>Copy HTML</span>
+                </button>
+                <button class="control-btn" id="aiAgentBtn">
+                    <i class="fas fa-robot"></i>
+                    <span>AI Agent</span>
+                </button>
+                <button class="control-btn" id="newChatBtn">
+                    <i class="fas fa-plus"></i>
+                    <span>New Chat</span>
+                </button>
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="chat-history" id="chatHistory">
+            <div class="message ai-message">
+                <div class="message-header">
+                    <div class="message-sender">AI Assistant</div>
+                    <button class="copy-btn">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
+                <div class="message-content">
+                    <p>Hello! I'm your AI assistant powered by Gemini. How can I help you today?</p>
+                    <p>You can use the new features:</p>
+                    <ul>
+                        <li><strong>Theme Switch</strong> - Toggle between light/dark mode</li>
+                        <li><strong>AI Agent</strong> - Enable for enhanced web searches</li>
+                        <li><strong>Attachments</strong> - Upload files for analysis</li>
+                        <li><strong>Copy HTML</strong> - Get the source code of this interface</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-area">
+            <div class="input-group">
+                <button class="attachment-btn" id="attachmentBtn">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <input type="text" class="message-input" id="messageInput" placeholder="Ask me anything..." autocomplete="off">
+                <button class="send-btn" id="sendBtn" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <input type="file" id="fileInput" style="display: none;">
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">Copied to clipboard!</div>
+    
+    <div class="modal" id="htmlModal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <h2>HTML Source Code</h2>
+            <p>Copy the code below to use this chatbot interface:</p>
+            <div class="html-code" id="htmlCodeContent"></div>
+            <button class="control-btn" id="copyHtmlBtn" style="margin-top: 15px;">
+                <i class="far fa-copy"></i>
+                Copy HTML Code
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // DOM Elements
+        const chatHistory = document.getElementById('chatHistory');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const notification = document.getElementById('notification');
+        const attachmentBtn = document.getElementById('attachmentBtn');
+        const fileInput = document.getElementById('fileInput');
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlCopyBtn = document.getElementById('htmlCopyBtn');
+        const aiAgentBtn = document.getElementById('aiAgentBtn');
+        const htmlModal = document.getElementById('htmlModal');
+        const htmlCodeContent = document.getElementById('htmlCodeContent');
+        const copyHtmlBtn = document.getElementById('copyHtmlBtn');
+        const closeModal = document.getElementById('closeModal');
+        
+        // State management
+        let isWaitingForResponse = false;
+        let isDarkTheme = false;
+        let isAiAgentActive = false;
+        let currentFile = null;
+        
+        // Update send button state based on input
+        messageInput.addEventListener('input', function() {
+            sendBtn.disabled = this.value.trim() === '' || isWaitingForResponse;
+        });
+        
+        // Send message on button click
+        sendBtn.addEventListener('click', sendMessage);
+        
+        // Send message on Enter key
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey && !sendBtn.disabled) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        // New chat functionality
+        newChatBtn.addEventListener('click', function() {
+            chatHistory.innerHTML = `
+                <div class="message ai-message">
+                    <div class="message-header">
+                        <div class="message-sender">AI Assistant</div>
+                        <button class="copy-btn">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="message-content">
+                        Hello! I'm your AI assistant powered by Gemini. How can I help you today?
+                    </div>
+                </div>
+            `;
+            // Reset file attachment
+            currentFile = null;
+            // Add event listeners to new message
+            addCopyEventListeners();
+        });
+        
+        // Attachment functionality
+        attachmentBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+        
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                currentFile = e.target.files[0];
+                displayFileAttachment(currentFile);
+            }
+        });
+        
+        // Theme toggle functionality
+        themeToggle.addEventListener('click', function() {
+            isDarkTheme = !isDarkTheme;
+            document.body.classList.toggle('dark-theme', isDarkTheme);
+            themeToggle.innerHTML = isDarkTheme ? 
+                '<i class="fas fa-sun"></i>' : 
+                '<i class="fas fa-moon"></i>';
+        });
+        
+        // HTML copy functionality
+        htmlCopyBtn.addEventListener('click', function() {
+            // Generate the HTML content for the modal
+            htmlCodeContent.textContent = document.documentElement.outerHTML;
+            htmlModal.style.display = 'flex';
+        });
+        
+        // Copy HTML code
+        copyHtmlBtn.addEventListener('click', function() {
+            const textToCopy = htmlCodeContent.textContent;
+            copyToClipboard(textToCopy);
+            showNotification('HTML code copied to clipboard!');
+        });
+        
+        // Close modal
+        closeModal.addEventListener('click', function() {
+            htmlModal.style.display = 'none';
+        });
+        
+        // Toggle AI Agent
+        aiAgentBtn.addEventListener('click', function() {
+            isAiAgentActive = !isAiAgentActive;
+            aiAgentBtn.style.backgroundColor = isAiAgentActive ? 'var(--warning)' : '';
+            aiAgentBtn.style.color = isAiAgentActive ? 'black' : '';
+            
+            showNotification(isAiAgentActive ? 
+                'AI Agent enabled - Enhanced search activated' : 
+                'AI Agent disabled');
+        });
+        
+        // Function to send a message
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || isWaitingForResponse) return;
+            
+            // Add user message to chat
+            addMessageToChat(message, 'user');
+            
+            // Clear input and disable send button
+            messageInput.value = '';
+            sendBtn.disabled = true;
+            
+            // Show typing indicator
+            showTypingIndicator();
+            isWaitingForResponse = true;
+            
+            // Simulate API call to Gemini
+            setTimeout(() => {
+                // In a real implementation, this would be a fetch request to the Gemini API
+                // For demonstration, we're using a simulated response
+                const aiResponse = generateAIResponse(message);
+                
+                // Remove typing indicator
+                removeTypingIndicator();
+                
+                // Add AI response to chat
+                addMessageToChat(aiResponse, 'ai');
+                
+                // If AI agent is active, sometimes add search results
+                if (isAiAgentActive && Math.random() > 0.3) {
+                    addSearchResults(message);
+                }
+                
+                isWaitingForResponse = false;
+            }, 1500);
+        }
+        
+        // Function to display file attachment
+        function displayFileAttachment(file) {
+            // Remove any existing file attachment display
+            const existingAttachment = document.querySelector('.file-attachment-display');
+            if (existingAttachment) existingAttachment.remove();
+            
+            const fileSize = (file.size / 1024).toFixed(1) + ' KB';
+            
+            const attachmentDisplay = document.createElement('div');
+            attachmentDisplay.className = 'file-attachment-display';
+            attachmentDisplay.innerHTML = `
+                <div class="file-attachment">
+                    <i class="fas fa-file-alt"></i>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${fileSize}</div>
+                    </div>
+                    <button class="remove-file" id="removeFile">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Insert after the last message
+            chatHistory.appendChild(attachmentDisplay);
+            
+            // Scroll to the bottom
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            // Add event listener to remove button
+            document.getElementById('removeFile').addEventListener('click', function() {
+                attachmentDisplay.remove();
+                fileInput.value = '';
+                currentFile = null;
+            });
+        }
+        
+        // Function to add a message to the chat
+        function addMessageToChat(content, sender) {
+            const messageElement = document.createElement('div');
+            
+            if (sender === 'user') {
+                messageElement.className = 'message user-message';
+                messageElement.innerHTML = `
+                    <div class="message-header">
+                        <div class="message-sender">You</div>
+                        <button class="copy-btn">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="message-content">${escapeHtml(content)}</div>
+                `;
+            } else {
+                // Check if response contains code blocks
+                const formattedContent = formatResponse(content);
+                
+                messageElement.className = 'message ai-message';
+                messageElement.innerHTML = `
+                    <div class="message-header">
+                        <div class="message-sender">AI Assistant</div>
+                        <button class="copy-btn">
+                            <i class="far fa-copy"></i>
+                        </button>
+                    </div>
+                    <div class="message-content">${formattedContent}</div>
+                `;
+            }
+            
+            chatHistory.appendChild(messageElement);
+            
+            // Scroll to the bottom
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            
+            // Add event listeners to the new message
+            addCopyEventListeners();
+        }
+        
+        // Function to format AI response with code blocks
+        function formatResponse(response) {
+            // Simple pattern to simulate code blocks in demo responses
+            const codeBlockPattern = /```([\s\S]*?)```/g;
+            
+            return response.replace(codeBlockPattern, (match, code) => {
+                const escapedCode = escapeHtml(code.trim());
+                return `
+                    <div class="code-header">
+                        <span>Code</span>
+                        <button class="copy-code-btn">
+                            <i class="far fa-copy"></i>
+                            Copy
+                        </button>
+                    </div>
+                    <pre>${escapedCode}</pre>
+                `;
+            });
+        }
+        
+        // Function to show typing indicator
+        function showTypingIndicator() {
+            const typingElement = document.createElement('div');
+            typingElement.className = 'typing-indicator';
+            typingElement.id = 'typingIndicator';
+            typingElement.innerHTML = `
+                <span></span>
+                <span></span>
+                <span></span>
+                <span>AI Assistant is typing...</span>
+            `;
+            chatHistory.appendChild(typingElement);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+        
+        // Function to remove typing indicator
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+        
+        // Function to add search results
+        function addSearchResults(query) {
+            const searchResults = [
+                {
+                    title: "Understanding " + query,
+                    url: "https://example.com/article/" + encodeURIComponent(query),
+                    snippet: "Learn more about " + query + " and how it's changing the industry. This comprehensive guide covers all aspects."
+                },
+                {
+                    title: "Latest developments in " + query,
+                    url: "https://news.example.com/" + encodeURIComponent(query),
+                    snippet: "Breaking news and recent advancements related to " + query + ". Stay up to date with the latest information."
+                },
+                {
+                    title: "Best practices for " + query,
+                    url: "https://guide.example.com/" + encodeURIComponent(query),
+                    snippet: "Discover expert tips and proven strategies for implementing " + query + " effectively in your projects."
+                }
+            ];
+            
+            const searchPanel = document.createElement('div');
+            searchPanel.className = 'ai-agent-panel';
+            searchPanel.innerHTML = `
+                <div class="agent-header">
+                    <i class="fas fa-search"></i>
+                    <h3>Web Search Results</h3>
+                </div>
+                <div class="search-results">
+                    ${searchResults.map(result => `
+                        <div class="search-result">
+                            <a href="${result.url}" target="_blank">${result.title}</a>
+                            <p>${result.snippet}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            chatHistory.appendChild(searchPanel);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+        
+        // Function to add copy event listeners
+        function addCopyEventListeners() {
+            // Add copy functionality to message copy buttons
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const messageContent = this.closest('.message').querySelector('.message-content');
+                    let textToCopy = '';
+                    
+                    // Handle code blocks differently
+                    if (messageContent.querySelector('pre')) {
+                        textToCopy = messageContent.querySelector('pre').textContent;
+                    } else {
+                        textToCopy = messageContent.textContent;
+                    }
+                    
+                    copyToClipboard(textToCopy);
+                    showNotification('Copied to clipboard!');
+                });
+            });
+            
+            // Add copy functionality to code block buttons
+            document.querySelectorAll('.copy-code-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const codeBlock = this.closest('.message-content').querySelector('pre');
+                    if (codeBlock) {
+                        copyToClipboard(codeBlock.textContent);
+                        showNotification('Code copied to clipboard!');
+                        
+                        // Visual feedback
+                        const originalText = button.innerHTML;
+                        button.innerHTML = `
+                            <i class="fas fa-check"></i>
+                            Copied!
+                        `;
+                        
+                        setTimeout(() => {
+                            button.innerHTML = originalText;
+                        }, 2000);
+                    }
+                });
+            });
+        }
+        
+        // Function to copy text to clipboard
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+        
+        // Function to show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+        
+        // Function to escape HTML (for security)
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        // Function to generate simulated AI responses
+        function generateAIResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+                return "Hello there! How can I assist you today?";
+            } else if (lowerMessage.includes('weather')) {
+                return "I can't access real-time weather data, but I can help you find a weather service or explain weather patterns!";
+            } else if (lowerMessage.includes('javascript') || lowerMessage.includes('code')) {
+                return `Here's an example of a JavaScript function that calculates the factorial of a number:
+
+\`\`\`
+function factorial(n) {
+    if (n === 0 || n === 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+// Example usage:
+console.log(factorial(5)); // Output: 120
+\`\`\`
+
+Would you like me to explain how this works or provide more examples?`;
+            } else if (lowerMessage.includes('thank')) {
+                return "You're welcome! Is there anything else I can help you with?";
+            } else if (lowerMessage.includes('name')) {
+                return "I'm an AI assistant powered by Gemini. You can call me Assistant!";
+            } else if (lowerMessage.includes('theme')) {
+                return "You can switch between light and dark themes using the moon/sun icon in the top right corner. This helps reduce eye strain in different lighting conditions.";
+            } else if (lowerMessage.includes('attach') || lowerMessage.includes('file')) {
+                return "I see you've attached a file. In a full implementation, I would be able to analyze its contents. Currently, this is a UI demonstration. You can remove the attachment using the X button.";
+            } else {
+                return `I understand you're asking about "${message}". This is a simulated response. In a real implementation, this would be generated by the Gemini AI model. The actual API call would look something like:
+
+\`\`\`
+fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=YOUR_API_KEY', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+        contents: [{
+            parts: [{
+                text: "${message}"
+            }]
+        }]
+    })
+})
+.then(response => response.json())
+.then(data => {
+    const aiResponse = data.candidates[0].content.parts[0].text;
+    // Display response in UI
+});
+\`\`\`
+
+Remember to replace YOUR_API_KEY with your actual Gemini API key.`;
+            }
+        }
+        
+        // Initialize copy event listeners
+        addCopyEventListeners();
+    </script>
+</body>
+</html>
